@@ -1,0 +1,1561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OT Security Explorer — Oil & Gas Cybersecurity</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow:wght@300;400;500;600;700&display=swap');
+
+  :root {
+    --bg: #060c18;
+    --bg2: #0d1525;
+    --bg3: #14213d;
+    --amber: #f59e0b;
+    --amber-dim: #92600a;
+    --cyan: #06b6d4;
+    --red: #ef4444;
+    --green: #22c55e;
+    --purple: #a855f7;
+    --text: #cbd5e1;
+    --text-dim: #64748b;
+    --border: #1e2d4a;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Barlow', sans-serif;
+    font-size: 14px;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(6,182,212,0.015) 2px, rgba(6,182,212,0.015) 4px);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .header {
+    background: linear-gradient(135deg, #0d1525 0%, #14213d 100%);
+    border-bottom: 1px solid var(--amber);
+    padding: 16px 24px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .header-top {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 12px;
+  }
+
+  .logo {
+    font-family: 'Share Tech Mono', monospace;
+    color: var(--amber);
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+  }
+
+  .header h1 {
+    font-size: 22px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: -0.5px;
+  }
+
+  .header h1 span { color: var(--amber); }
+
+  .subtitle {
+    font-size: 12px;
+    color: var(--text-dim);
+    font-family: 'Share Tech Mono', monospace;
+    letter-spacing: 1px;
+  }
+
+  .tabs {
+    display: flex;
+    gap: 4px;
+    overflow-x: auto;
+    padding-bottom: 2px;
+  }
+
+  .tab {
+    background: none;
+    border: 1px solid transparent;
+    color: var(--text-dim);
+    font-family: 'Barlow', sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 6px 14px;
+    cursor: pointer;
+    border-radius: 4px;
+    white-space: nowrap;
+    letter-spacing: 0.5px;
+    transition: all 0.2s;
+  }
+
+  .tab:hover { color: var(--text); border-color: var(--border); }
+
+  .tab.active {
+    background: var(--amber);
+    color: #000;
+    border-color: var(--amber);
+    font-weight: 700;
+  }
+
+  .content {
+    position: relative;
+    z-index: 1;
+    padding: 24px;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  /* ===== COMPONENTS ===== */
+  .section-title {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--amber);
+    margin-bottom: 4px;
+  }
+
+  h2 {
+    font-size: 24px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 8px;
+  }
+
+  .lead {
+    color: var(--text-dim);
+    line-height: 1.6;
+    margin-bottom: 24px;
+    max-width: 800px;
+  }
+
+  .card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+
+  .card:hover { border-color: var(--amber-dim); transition: border-color 0.2s; }
+
+  .card-title {
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .badge {
+    display: inline-block;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 3px;
+    letter-spacing: 1px;
+    font-weight: 400;
+  }
+
+  .badge-amber { background: rgba(245,158,11,0.15); color: var(--amber); border: 1px solid var(--amber-dim); }
+  .badge-cyan { background: rgba(6,182,212,0.15); color: var(--cyan); border: 1px solid #0891b2; }
+  .badge-red { background: rgba(239,68,68,0.15); color: var(--red); border: 1px solid #dc2626; }
+  .badge-green { background: rgba(34,197,94,0.15); color: var(--green); border: 1px solid #16a34a; }
+  .badge-purple { background: rgba(168,85,247,0.15); color: var(--purple); border: 1px solid #9333ea; }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+
+  /* ===== PURDUE MODEL ===== */
+  .purdue {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+
+  .purdue-level {
+    display: flex;
+    align-items: stretch;
+    cursor: pointer;
+    transition: background 0.2s;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .purdue-level:last-child { border-bottom: none; }
+  .purdue-level:hover { background: rgba(245,158,11,0.05); }
+  .purdue-level.expanded { background: rgba(245,158,11,0.07); }
+
+  .level-number {
+    width: 44px;
+    min-height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 18px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  .level-4 .level-number { background: rgba(168,85,247,0.2); color: var(--purple); }
+  .level-3 .level-number { background: rgba(245,158,11,0.2); color: var(--amber); }
+  .level-2 .level-number { background: rgba(6,182,212,0.2); color: var(--cyan); }
+  .level-1 .level-number { background: rgba(34,197,94,0.2); color: var(--green); }
+  .level-0 .level-number { background: rgba(239,68,68,0.2); color: var(--red); }
+
+  .level-content {
+    flex: 1;
+    padding: 14px 16px;
+  }
+
+  .level-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .level-name { font-weight: 700; color: #fff; font-size: 15px; }
+  .level-examples { font-size: 12px; color: var(--text-dim); margin-top: 2px; }
+  .expand-icon { color: var(--amber); font-size: 14px; transition: transform 0.2s; }
+  .purdue-level.expanded .expand-icon { transform: rotate(90deg); }
+
+  .level-detail {
+    display: none;
+    padding: 12px 0 4px;
+  }
+
+  .purdue-level.expanded .level-detail { display: block; }
+
+  .detail-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-top: 8px; }
+  .detail-item { background: var(--bg3); border-radius: 6px; padding: 10px; }
+  .detail-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-dim); margin-bottom: 4px; }
+  .detail-value { font-size: 12px; color: var(--text); line-height: 1.5; }
+
+  .trust-boundary {
+    background: linear-gradient(90deg, transparent, rgba(239,68,68,0.3), transparent);
+    height: 2px;
+    margin: 2px 0;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .trust-boundary-label {
+    background: var(--bg2);
+    border: 1px solid var(--red);
+    color: var(--red);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 9px;
+    padding: 2px 8px;
+    border-radius: 3px;
+    letter-spacing: 2px;
+  }
+
+  /* ===== STRIDE TABLE ===== */
+  .stride-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+  .stride-table th {
+    background: var(--bg3);
+    color: var(--amber);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 10px 14px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+  .stride-table td {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+    line-height: 1.5;
+    font-size: 13px;
+  }
+  .stride-table tr:hover td { background: rgba(245,158,11,0.03); }
+  .stride-letter {
+    width: 36px;
+    height: 36px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 18px;
+    font-weight: 700;
+  }
+
+  /* ===== MITRE TABLE ===== */
+  .mitre-filters {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+
+  .filter-btn {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    font-family: 'Barlow', sans-serif;
+    font-size: 11px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .filter-btn:hover, .filter-btn.active {
+    border-color: var(--amber);
+    color: var(--amber);
+    background: rgba(245,158,11,0.1);
+  }
+
+  .mitre-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    margin-bottom: 10px;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+
+  .mitre-card:hover { border-color: var(--cyan); }
+
+  .mitre-card-header {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    cursor: pointer;
+    gap: 12px;
+  }
+
+  .technique-id {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+    color: var(--cyan);
+    white-space: nowrap;
+    min-width: 60px;
+  }
+
+  .technique-name { font-weight: 600; color: #fff; flex: 1; }
+  .technique-tactic { font-size: 11px; margin-left: auto; }
+
+  .mitre-card-body {
+    display: none;
+    padding: 0 16px 14px;
+    border-top: 1px solid var(--border);
+  }
+
+  .mitre-card.open .mitre-card-body { display: block; }
+
+  .mitre-detail-row {
+    display: grid;
+    grid-template-columns: 130px 1fr;
+    gap: 8px;
+    padding: 6px 0;
+    border-bottom: 1px solid rgba(30,45,74,0.5);
+    font-size: 13px;
+  }
+
+  .mitre-detail-row:last-child { border-bottom: none; }
+  .mitre-detail-label { color: var(--text-dim); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; padding-top: 2px; }
+
+  /* ===== ATTACK CHAIN ===== */
+  .attack-chain {
+    position: relative;
+    padding-left: 32px;
+  }
+
+  .attack-chain::before {
+    content: '';
+    position: absolute;
+    left: 14px;
+    top: 20px;
+    bottom: 20px;
+    width: 2px;
+    background: linear-gradient(180deg, var(--amber), var(--red));
+  }
+
+  .attack-step {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-bottom: 12px;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+
+  .attack-step:hover { border-color: var(--red); }
+
+  .attack-step-header {
+    display: flex;
+    align-items: center;
+    padding: 14px 16px;
+    cursor: pointer;
+    gap: 12px;
+  }
+
+  .step-dot {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+    font-weight: 700;
+    flex-shrink: 0;
+    position: relative;
+    left: -45px;
+    margin-right: -45px;
+    z-index: 2;
+    border: 2px solid var(--bg);
+  }
+
+  .attack-step-title { font-weight: 700; color: #fff; }
+  .attack-step-subtitle { font-size: 12px; color: var(--text-dim); margin-top: 2px; }
+
+  .attack-step-body {
+    display: none;
+    padding: 0 16px 16px;
+    border-top: 1px solid var(--border);
+  }
+
+  .attack-step.open .attack-step-body { display: block; }
+
+  .attack-detail-box {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 12px;
+  }
+
+  .detail-box {
+    background: var(--bg3);
+    border-radius: 6px;
+    padding: 12px;
+  }
+
+  .detail-box h4 {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 6px;
+  }
+
+  .detail-box p { font-size: 12px; line-height: 1.6; color: var(--text); }
+
+  /* ===== DEFENSE LAYERS ===== */
+  .defense-pyramid {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 24px;
+  }
+
+  .defense-layer {
+    border-radius: 6px;
+    padding: 14px 18px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 1px solid transparent;
+  }
+
+  .defense-layer:hover { border-color: currentColor; opacity: 0.9; }
+
+  .defense-layer-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .defense-layer-title { font-weight: 700; font-size: 15px; }
+  .defense-layer-subtitle { font-size: 12px; opacity: 0.7; margin-top: 2px; }
+
+  .defense-controls {
+    display: none;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+  }
+
+  .defense-layer.open .defense-controls { display: block; }
+
+  .control-tag {
+    display: inline-block;
+    margin: 3px;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 500;
+    background: rgba(0,0,0,0.3);
+  }
+
+  /* ===== EVAL SECTION ===== */
+  .limitation-card {
+    background: var(--bg2);
+    border-left: 3px solid var(--red);
+    border-radius: 0 6px 6px 0;
+    padding: 14px 18px;
+    margin-bottom: 12px;
+  }
+
+  .gap-card {
+    background: var(--bg2);
+    border-left: 3px solid var(--amber);
+    border-radius: 0 6px 6px 0;
+    padding: 14px 18px;
+    margin-bottom: 12px;
+  }
+
+  .insight-box {
+    background: linear-gradient(135deg, rgba(6,182,212,0.1), rgba(6,182,212,0.05));
+    border: 1px solid rgba(6,182,212,0.3);
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin-bottom: 16px;
+  }
+
+  /* ===== DATA FLOW SVG ===== */
+  .arch-svg-container {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    overflow-x: auto;
+  }
+
+  /* ===== UTILITIES ===== */
+  p { line-height: 1.65; color: var(--text); }
+  strong { color: #fff; }
+  .text-amber { color: var(--amber); }
+  .text-cyan { color: var(--cyan); }
+  .text-red { color: var(--red); }
+  .text-green { color: var(--green); }
+  .mt-8 { margin-top: 8px; }
+  .mt-16 { margin-top: 16px; }
+  .mb-8 { margin-bottom: 8px; }
+  .mb-16 { margin-bottom: 16px; }
+  .mono { font-family: 'Share Tech Mono', monospace; }
+
+  .info-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 10px;
+    font-size: 13px;
+  }
+
+  .info-icon { flex-shrink: 0; margin-top: 1px; }
+
+  ul.styled { list-style: none; padding: 0; }
+  ul.styled li {
+    padding: 4px 0 4px 18px;
+    position: relative;
+    color: var(--text);
+    font-size: 13px;
+    line-height: 1.5;
+  }
+  ul.styled li::before {
+    content: '▸';
+    position: absolute;
+    left: 0;
+    color: var(--amber);
+    font-size: 10px;
+    top: 6px;
+  }
+
+  .comparison-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .comparison-table th {
+    background: var(--bg3);
+    color: var(--cyan);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 10px 14px;
+    text-align: left;
+  }
+  .comparison-table td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  .comparison-table tr:hover td { background: rgba(6,182,212,0.04); }
+
+  @media (max-width: 768px) {
+    .grid-2, .grid-3, .detail-grid, .attack-detail-box { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-top">
+    <div>
+      <div class="logo">CSM · DM ZG535 · Assignment Explorer</div>
+      <h1>OT Security <span>Intelligence Hub</span></h1>
+    </div>
+  </div>
+  <div class="tabs" id="tabs">
+    <button class="tab active" onclick="switchTab('arch')">🏭 OT Architecture</button>
+    <button class="tab" onclick="switchTab('stride')">🎯 STRIDE Threat Model</button>
+    <button class="tab" onclick="switchTab('mitre')">⚔️ MITRE ATT&CK for ICS</button>
+    <button class="tab" onclick="switchTab('attack')">🔴 Attack Simulation</button>
+    <button class="tab" onclick="switchTab('defense')">🛡️ Defense Strategy</button>
+    <button class="tab" onclick="switchTab('eval')">🔍 Critical Evaluation</button>
+  </div>
+</div>
+
+<div class="content">
+
+  <!-- TAB 1: ARCHITECTURE -->
+  <div class="panel active" id="panel-arch">
+    <div class="section-title">Task 1 — System Understanding</div>
+    <h2>Oil & Gas Facility Architecture</h2>
+    <p class="lead">A smart Oil & Gas refinery operates across multiple interconnected layers. The Purdue Model (ISA-99) is the standard way to describe this — it separates the system into 5 levels, with security boundaries between them. Click any level to explore.</p>
+
+    <div class="purdue">
+      <div class="purdue-level level-4" onclick="toggleLevel(this)">
+        <div class="level-number">4</div>
+        <div class="level-content">
+          <div class="level-header">
+            <div>
+              <div class="level-name">Enterprise IT Network</div>
+              <div class="level-examples">ERP, email, HR systems, business analytics, cloud dashboards</div>
+            </div>
+            <span class="expand-icon">▶</span>
+          </div>
+          <div class="level-detail">
+            <p>This is the standard corporate IT environment — Windows servers, Active Directory, email, ERP (SAP), and internet-facing services. In Oil & Gas, this includes production planning software, vendor portals, and executive dashboards.</p>
+            <div class="detail-grid">
+              <div class="detail-item">
+                <div class="detail-label">Key Assets (IT)</div>
+                <div class="detail-value">Active Directory servers, ERP/SAP systems, Email servers, VPN gateways, Cloud dashboards (AWS/Azure)</div>
+              </div>
+              <div class="detail-item">
+                <div class="detail-label">Data Flows</div>
+                <div class="detail-value">Production reports from L3 → Business KPIs, Email ↔ Internet, ERP ↔ Cloud, Remote access via VPN</div>
+              </div>
+              <div class="detail-item">
+                <div class="detail-label">Key Threats</div>
+                <div class="detail-value">Phishing, ransomware, credential theft, VPN exploitation, supply chain compromise</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="trust-boundary">
+        <div class="trust-boundary-label">⚠ CRITICAL TRUST BOUNDARY — IT ↔ OT</div>
+      </div>
+
+      <div class="purdue-level level-3" onclick="toggleLevel(this)">
+        <div class="level-number">3</div>
+        <div class="level-content">
+          <div class="level-header">
+            <div>
+              <div class="level-name">SCADA / Operations Management</div>
+              <div class="level-examples">SCADA servers, historian, engineering workstations, HMI servers</div>
+            </div>
+            <span class="expand-icon">▶</span>
+          </div>
+          <div class="level-detail">
+            <p>SCADA (Supervisory Control and Data Acquisition) provides centralized monitoring and control of the entire facility. It collects real-time data from all PLCs, stores historical records (historian), and lets operators supervise the entire plant from one interface.</p>
+            <div class="detail-grid">
+              <div class="detail-item">
+                <div class="detail-label">Key Assets (OT)</div>
+                <div class="detail-value">SCADA server (Honeywell/Yokogawa/Wonderware), Process historian, Engineering workstations, HMI application servers</div>
+              </div>
+              <div class="detail-item">
+                <div class="detail-label">Data Flows</div>
+                <div class="detail-value">PLC status ↑ SCADA, Commands ↓ PLCs, Historical data → IT, Alarm notifications → operators</div>
+              </div>
+              <div class="detail-item">
+                <div class="detail-label">Why It's Critical</div>
+                <div class="detail-value">The "brain" of the plant. Compromising SCADA = full visibility over all processes and ability to issue commands to any field device.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="purdue-level level-2" onclick="toggleLevel(this)">
+        <div class="level-number">2</div>
+        <div class="level-content">
+          <div class="level-header">
+            <div>
+              <div class="level-name">Control Systems (PLCs / DCS)</div>
+              <div class="level-examples">PLCs, DCS controllers, Safety Instrumented Systems (SIS), local HMIs</div>
+            </div>
+            <span class="expand-icon">▶</span>
+          </div>
+          <div class="level-detail">
+            <p>PLCs execute the actual control logic — they read sensor inputs and actuate physical devices (open/close valves, start/stop pumps, adjust pressure). In Oil & Gas, this level also includes the Safety Instrumented System (SIS), which is supposed to trigger emergency shutdowns. This is what Stuxnet targeted. This is what TRITON attacked.</p>
+            <div class="detail-grid">
+              <div class="detail-item">
+                <div class="detail-label">Key Assets</div>
+                <div class="detail-value">Siemens S7 PLCs, Yokogawa DCS, Triconex SIS (safety), Local operator panels (HMIs), Remote Terminal Units (RTUs)</div>
+              </div>
+              <div class="detail-item">
+                <div class="detail-label">Protocols Used</div>
+                <div class="detail-value">Modbus TCP, DNP3, OPC UA, PROFIBUS, Foundation Fieldbus — most unencrypted by design</div>
+              </div>
+              <div class="detail-item">
+                <div class="detail-label">Why It's Critical</div>
+                <div class="detail-value">Manipulating PLC logic = physical consequences. Wrong valve position → pipeline overpressure. Disabled SIS → no emergency shutdown. This is how you cause an explosion.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="trust-boundary">
+        <div class="trust-boundary-label">⚠ OPERATIONAL BOUNDARY — Control ↔ Field</div>
+      </div>
+
+      <div class="purdue-level level-1" onclick="toggleLevel(this)">
+        <div class="level-number">1</div>
+        <div class="level-content">
+          <div class="level-header">
+            <div>
+              <div class="level-name">Basic Control Layer</div>
+              <div class="level-examples">Process controllers, relay logic, local control loops</div>
+            </div>
+            <span class="expand-icon">▶</span>
+          </div>
+          <div class="level-detail">
+            <p>Automated control loops — PID controllers managing individual variables like temperature, pressure, and flow rate. Often embedded within Level 2 devices in modern plants.</p>
+            <div class="detail-grid">
+              <div class="detail-item"><div class="detail-label">Function</div><div class="detail-value">Closed-loop control: maintain process variable at setpoint (e.g., keep pressure at 50 PSI)</div></div>
+              <div class="detail-item"><div class="detail-label">Risk</div><div class="detail-value">Setpoint manipulation: attacker changes target value to unsafe range</div></div>
+              <div class="detail-item"><div class="detail-label">Example</div><div class="detail-value">Pressure controller for a pipeline section — alter the setpoint and the pipeline ruptures</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="purdue-level level-0" onclick="toggleLevel(this)">
+        <div class="level-number">0</div>
+        <div class="level-content">
+          <div class="level-header">
+            <div>
+              <div class="level-name">Field Devices (IIoT / Sensors)</div>
+              <div class="level-examples">Temperature sensors, pressure gauges, flow meters, actuators, valves, pumps</div>
+            </div>
+            <span class="expand-icon">▶</span>
+          </div>
+          <div class="level-detail">
+            <p>Physical hardware that interacts directly with the process. Sensors measure real-world conditions; actuators make things happen. IIoT devices here connect to cloud dashboards via edge gateways — this is the newest and often least-secured layer.</p>
+            <div class="detail-grid">
+              <div class="detail-item"><div class="detail-label">IIoT Devices</div><div class="detail-value">Smart sensors (temp/pressure/flow), Edge gateways, Smart valves with digital interfaces, Wireless mesh sensor networks</div></div>
+              <div class="detail-item"><div class="detail-label">Data Path</div><div class="detail-value">Sensor → PLC (wired/wireless) → SCADA, OR Sensor → Edge Gateway → Cloud Dashboard (bypassing OT entirely)</div></div>
+              <div class="detail-item"><div class="detail-label">IIoT Risk</div><div class="detail-value">Default credentials, no encryption, unpatched firmware, direct cloud connectivity bypassing DMZ — a common blind spot in OT security</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">📊 Data Flow Summary</div>
+        <p class="mt-8" style="font-size:13px;">Physical process → <strong>Sensors</strong> → <strong>PLCs</strong> (control logic) → <strong>SCADA</strong> (supervision) → <strong>IT Network</strong> (business reporting) → <strong>Cloud</strong> (remote dashboards)</p>
+        <p class="mt-8" style="font-size:13px; color: var(--red);">⚠ Attacks typically move in reverse: Internet → IT → OT → Field devices</p>
+      </div>
+      <div class="card">
+        <div class="card-title">🔒 Trust Boundaries (Key Concept)</div>
+        <ul class="styled mt-8">
+          <li><strong>Internet → IT:</strong> Firewall, DMZ</li>
+          <li><strong>IT → OT:</strong> The most critical boundary. Requires data diode or unidirectional gateway</li>
+          <li><strong>OT → Field:</strong> Physical security + protocol filtering</li>
+          <li><strong>Cloud ↔ OT:</strong> Often poorly secured — direct IIoT paths bypass normal boundaries</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 2: STRIDE -->
+  <div class="panel" id="panel-stride">
+    <div class="section-title">Task 2 — Threat Modelling</div>
+    <h2>STRIDE Threat Analysis</h2>
+    <p class="lead">STRIDE is a threat modeling framework developed by Microsoft. Each letter represents a threat category. In an OT/ICS environment, these threats have very different implications than in IT — because the consequences are physical, not just digital.</p>
+
+    <table class="stride-table">
+      <thead>
+        <tr>
+          <th>Letter</th>
+          <th>Threat</th>
+          <th>In Oil & Gas Context</th>
+          <th>Affected Components</th>
+          <th>Example</th>
+          <th>Impact</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><div class="stride-letter" style="background:rgba(239,68,68,0.15);color:#ef4444;">S</div></td>
+          <td><strong style="color:#fff;">Spoofing</strong><br><span style="color:var(--text-dim);font-size:12px;">Impersonating a legitimate entity</span></td>
+          <td style="font-size:13px;">Attacker impersonates an engineer's workstation or sends forged Modbus commands pretending to be the SCADA server</td>
+          <td><span class="badge badge-amber">PLC</span> <span class="badge badge-cyan">SCADA</span></td>
+          <td style="font-size:12px;">Fake ARP responses redirect PLC traffic to attacker-controlled device; forged DNP3 packets open pipeline valves</td>
+          <td><span class="badge badge-red">SAFETY</span></td>
+        </tr>
+        <tr>
+          <td><div class="stride-letter" style="background:rgba(245,158,11,0.15);color:#f59e0b;">T</div></td>
+          <td><strong style="color:#fff;">Tampering</strong><br><span style="color:var(--text-dim);font-size:12px;">Modifying data or code</span></td>
+          <td style="font-size:13px;">Modification of PLC ladder logic to alter process control — the Stuxnet approach. Also modifying historian records to hide the attack</td>
+          <td><span class="badge badge-amber">PLC</span> <span class="badge badge-red">SIS</span></td>
+          <td style="font-size:12px;">Change pressure setpoint from 60 PSI to 160 PSI; modify SIS logic to disable emergency shutdown trigger</td>
+          <td><span class="badge badge-red">EXPLOSION</span></td>
+        </tr>
+        <tr>
+          <td><div class="stride-letter" style="background:rgba(168,85,247,0.15);color:#a855f7;">R</div></td>
+          <td><strong style="color:#fff;">Repudiation</strong><br><span style="color:var(--text-dim);font-size:12px;">Denying actions took place</span></td>
+          <td style="font-size:13px;">OT devices rarely have comprehensive audit logs. Attacker can modify PLC config and leave no traceable record in standard OT environments</td>
+          <td><span class="badge badge-cyan">SCADA</span> <span class="badge badge-amber">Historian</span></td>
+          <td style="font-size:12px;">Engineer modifies PLC program; no log exists. Incident investigators can't determine who changed the valve schedule</td>
+          <td><span class="badge badge-amber">FORENSICS</span></td>
+        </tr>
+        <tr>
+          <td><div class="stride-letter" style="background:rgba(6,182,212,0.15);color:#06b6d4;">I</div></td>
+          <td><strong style="color:#fff;">Information Disclosure</strong><br><span style="color:var(--text-dim);font-size:12px;">Exposing sensitive data</span></td>
+          <td style="font-size:13px;">Exfiltration of process parameters, pipeline topology maps, and SCADA configuration — giving attackers a blueprint for a more targeted attack</td>
+          <td><span class="badge badge-purple">IT Network</span> <span class="badge badge-cyan">SCADA</span></td>
+          <td style="font-size:12px;">Attacker reads Modbus registers (unencrypted) over network tap; downloads engineering drawings from compromised workstation</td>
+          <td><span class="badge badge-purple">RECON</span></td>
+        </tr>
+        <tr>
+          <td><div class="stride-letter" style="background:rgba(34,197,94,0.15);color:#22c55e;">D</div></td>
+          <td><strong style="color:#fff;">Denial of Service</strong><br><span style="color:var(--text-dim);font-size:12px;">Making systems unavailable</span></td>
+          <td style="font-size:13px;">Flooding OT network traffic to prevent PLCs from receiving commands. In real-time control systems, a 100ms delay can cause process failure</td>
+          <td><span class="badge badge-amber">PLC</span> <span class="badge badge-cyan">OT Network</span></td>
+          <td style="font-size:12px;">DDoS on SCADA server; broadcast storm on OT network segment causing PLCs to enter fail-safe (random) states</td>
+          <td><span class="badge badge-red">SHUTDOWN</span></td>
+        </tr>
+        <tr>
+          <td><div class="stride-letter" style="background:rgba(245,158,11,0.15);color:#f59e0b;">E</div></td>
+          <td><strong style="color:#fff;">Elevation of Privilege</strong><br><span style="color:var(--text-dim);font-size:12px;">Gaining unauthorized access level</span></td>
+          <td style="font-size:13px;">Exploiting default credentials or unpatched vulnerabilities on SCADA workstations to gain admin-level control. Many OT devices have no privilege separation at all</td>
+          <td><span class="badge badge-cyan">SCADA</span> <span class="badge badge-purple">Eng. Workstation</span></td>
+          <td style="font-size:12px;">Default password 'admin/admin' on Siemens WinCC SCADA gives full control; unpatched Windows XP HMI exploited via EternalBlue</td>
+          <td><span class="badge badge-red">FULL CONTROL</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3 class="mt-16 mb-8" style="color:#fff;">Risk Matrix — Oil & Gas Systems</h3>
+    <table class="comparison-table">
+      <thead>
+        <tr>
+          <th>System Area</th>
+          <th>Primary Risk</th>
+          <th>STRIDE Categories</th>
+          <th>Safety Impact</th>
+          <th>Financial Impact</th>
+          <th>Environmental Impact</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Pipeline Control</strong></td>
+          <td>Overpressure → rupture</td>
+          <td>T (Tampering), S (Spoofing)</td>
+          <td style="color:var(--red);">Very High</td>
+          <td style="color:var(--red);">Very High</td>
+          <td style="color:var(--red);">Very High</td>
+        </tr>
+        <tr>
+          <td><strong>Refinery Safety (SIS)</strong></td>
+          <td>SIS disabled → no emergency stop</td>
+          <td>T, E (Privilege)</td>
+          <td style="color:var(--red);">Critical</td>
+          <td style="color:var(--red);">Very High</td>
+          <td style="color:var(--red);">Very High</td>
+        </tr>
+        <tr>
+          <td><strong>Energy Distribution</strong></td>
+          <td>Grid destabilization, blackout</td>
+          <td>D (DoS), T, S</td>
+          <td style="color:var(--amber);">High</td>
+          <td style="color:var(--red);">Very High</td>
+          <td style="color:var(--amber);">Medium</td>
+        </tr>
+        <tr>
+          <td><strong>Cloud Dashboards</strong></td>
+          <td>False readings; delayed response</td>
+          <td>S, I (Disclosure), T</td>
+          <td style="color:var(--amber);">Medium</td>
+          <td style="color:var(--amber);">Medium</td>
+          <td style="color:var(--text-dim);">Low</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="insight-box mt-16">
+      <strong class="text-cyan">Key Insight for the Assignment</strong>
+      <p class="mt-8" style="font-size:13px;">In OT, <strong>Availability and Integrity are more critical than Confidentiality</strong> — the reverse of typical IT priorities. A 30-second SCADA outage in a refinery is catastrophic. A modified PLC setpoint that nobody notices for 2 hours can kill people. This drives every design decision in defense.</p>
+    </div>
+  </div>
+
+  <!-- TAB 3: MITRE ATT&CK -->
+  <div class="panel" id="panel-mitre">
+    <div class="section-title">Task 3 — MITRE ATT&CK for ICS</div>
+    <h2>Technique Mapping — Oil & Gas</h2>
+    <p class="lead">MITRE ATT&CK for ICS is a separate framework from the Enterprise version. It uses technique IDs in the T08xx range. The sample answer incorrectly used Enterprise mitigations (M1030, etc.). These are the real ICS techniques relevant to your scenario.</p>
+
+    <div class="insight-box mb-16">
+      <strong class="text-cyan">⚠ Common Mistake to Avoid</strong>
+      <p class="mt-8" style="font-size:13px;">The sample answer used <span class="mono text-red">M1030</span> (Network Segmentation) and <span class="mono text-red">M1032</span> (MFA) — these are from MITRE ATT&CK <strong>Enterprise</strong>. The ICS framework has its own mitigations: <span class="mono text-green">M0810</span> (Network Allowlists), <span class="mono text-green">M0930</span> (Network Segmentation), etc. Using the right codes shows you know the actual ICS framework.</p>
+    </div>
+
+    <div class="mitre-filters">
+      <button class="filter-btn active" onclick="filterMitre('all', this)">All Techniques</button>
+      <button class="filter-btn" onclick="filterMitre('initial-access', this)">Initial Access</button>
+      <button class="filter-btn" onclick="filterMitre('execution', this)">Execution</button>
+      <button class="filter-btn" onclick="filterMitre('persistence', this)">Persistence</button>
+      <button class="filter-btn" onclick="filterMitre('lateral', this)">Lateral Movement</button>
+      <button class="filter-btn" onclick="filterMitre('discovery', this)">Discovery</button>
+      <button class="filter-btn" onclick="filterMitre('inhibit', this)">Inhibit Response</button>
+      <button class="filter-btn" onclick="filterMitre('impair', this)">Impair Process</button>
+      <button class="filter-btn" onclick="filterMitre('impact', this)">Impact</button>
+    </div>
+
+    <div id="mitre-cards">
+
+      <div class="mitre-card" data-tactic="initial-access">
+        <div class="mitre-card-header" onclick="toggleMitre(this.parentElement)">
+          <span class="technique-id">T0865</span>
+          <div>
+            <div class="technique-name">Spearphishing Attachment</div>
+            <div class="technique-tactic"><span class="badge badge-red">Initial Access</span></div>
+          </div>
+        </div>
+        <div class="mitre-card-body">
+          <div class="mitre-detail-row"><span class="mitre-detail-label">How it works</span><span>Attacker sends a targeted email with a malicious attachment (weaponized PDF or XLSX) to an oil & gas engineer or IT admin. Once opened, it installs a backdoor on the corporate IT machine — the first step into the network.</span></div>
+          <div class="mitre-detail-row"><span class="mitre-detail-label">Oil & Gas angle</span><span>Engineers regularly receive technical documents from vendors. A fake IEC 61511 compliance report or updated P&ID drawing is highly believable. Real precedent: TRITON began with spearphishing a Saudi Aramco affiliate.</span></div>
+          <div class="mitre-detail-row"><span class="mitre-detail-label">Components affected</span><span><span class="badge badge-purple">IT Workstation</span> <span class="badge badge-amber">Engineering PC</span></span></div>
+          <div class="mitre-detail-row"><span class="mitre-detail-label">ICS Mitigation</span><span><span class="mono text-green">M0949</span> Antivirus/Anti-malware, <span class="mono text-green">M0921</span> Restrict Web-Based Content, User awareness training</span></div>
+        </div>
+      </div>
+
+      <div class="mitre-card" data-tactic="initial-access">
+        <div class="mitre-card-header" onclick="toggleMitre(this.parentElement)">
+          <span class="technique-id">T0822</span>
+          <div>
+            <div class="technique-name">External Remote Services</div>
+            <div class="technique-tactic"><span class="badge badge-red">Initial Access</span></div>
+          </div>
+        </div>
+        <div class="mitre-card-body">
+          <div class="mitre-detail-row"><span class="mitre-detail-label">How it works</span><span>Exploitation of exposed remote access services — VPN gateways, RDP, VNC, TeamViewer — that allow external connectivity to the OT environment. Often involves weak/default credentials or unpatched vulnerabilities.</span></div>
+          <div class="mitre-detail-row"><span class="mitre-detail-label">Oil & Gas angle</span><span>Remote monitoring is standard in Oil & Gas (vendors, engineers on-call). Colonial Pipeline was breached via a compromised VPN account with no MFA. Oldsmar water plant via TeamViewer. These aren't unusual — they're industry norms.</span></div>
+          <div class="mitre-detail-row"><span class="mitre-detail-label">Components affected</span><span><span class="badge badge-purple">VPN Gateway</span> <span class="badge badge-cyan">SCADA</span> <span class="badge badge-amber">Eng. Workstation</span></span></div>
+          <div class="mitre-detail-row"><span class="mitre-detail-label">ICS Mitigation</span><span><span class="mono text-green">M0804</span> Authorization Enforcement, <span class="mono text-green">M0927</span> Password Policies, MFA for all remote access</span></div>
+        </div>
+      </div>
+
+      <div class="mitre-card" data-tactic="execution">
+        <div class="mitre-card-header" onclick="toggleMitre(this.parentElement)">
+          <span class="technique-id">T0807</span>
+          <div>
+            <div class="technique-name">Command-Line Interface</div>
+            <div class="technique-tactic"><span class="badge badge-amber">Execution</span></div>
+          </div>
+        </div>
+        <div class="mitre-card-body">
+          <div class="mitre-detail-row"><span class="mitre-detail-label">How it works</span><span>After gaining access to a workstation or SCADA server, the attacker uses command-line tools (cmd, PowerShell, bash) to execute reconnaissance commands, install malware, or interact with industrial software interfaces.</span></div>
+          <div class="mitre-detail-row"><span class="mitre-detail-label">Oil & Gas angle</span><span>SCADA engineering workstations run Windows. Once an attacker has a shell, they can run commands like <span class="mono" style="font-size:11px;">net scan</span>, access PLC programming software (Step 7, RSLogix), and use vendor CLI tools to talk directly to PLCs over Modbus.</span></div>
+          <div class="mitre-detail-row"><span class="mitre-detail-label">Components affected</span><span><span class="badge badge-cyan">SCADA Server</span> <span class="badge badge-amber">Eng. Workstation</span></span></div>
+          <div class="mitre-detail-row"><span class="mitre-detail-label">ICS Mitigation</span><span><span class="mono text-green">M0938</span> Execution Prevention, application allowlisting, disable unnecessary CLIs on OT hosts</span></div>
+        </div>
+      </div>
+
+      <div class="mitre-card" data-tactic="persistence">
+        <div class="mitre-card-header" onclick="toggleMitre(this.parentElement)">
+          <span class="technique-id">T0889</span>
+          <div>
+            <div class="technique-name">Modify Program</div>
+            <div class="technique-tactic"><span class="badge badge-purple">Persistence</span></div>
+          </div>
+        </div>
+        <div class="mitre-card-body">
+          <div class="mitre-detail-row"><span class="mitre-detail-label">How it works</span><span>Attacker modifies the logic program running on a PLC or RTU. The modified program includes a backdoor or altered process behavior. Since PLCs retain their programs across reboots, this achieves persistence automatically.</span></div>
+          <div class="mitre-detail-row"><span class="mitre-detail-label">Oil & Gas angle</span><span>This is the core Stuxnet technique. In a pipeline context: modify the valve control logic so that a specific valve receives an "open" command when it should close, triggered at a preset time or condition. Operator display still shows "closed."</span></div>
+          <div class="mitre-detail-row"><span class="mitre-detail-label">Components affected</span><span><span class="badge badge-amber">PLC</span> <span class="badge badge-red">RTU</span></span></div>
+          <div class="mitre-detail-row"><span class="mitre-detail-label">ICS Mitigation</span><span><span class="mono text-green">M0802</span> Communication Authenticity, <span class="mono text-green">M0947</span> Audit, integrity monitoring of PLC programs (hash comparison)</span></div>
+        </div>
+      </div>
+
+      <div class="mitre-card" data-tactic="persistence">
+        <div class="mitre-card-header" onclick="toggleMitre(this.parentElement)">
+          <span class="technique-id">T0857</span>
+          <div>
+            <div class="technique-name">System Firmware</div>
+            <div class="technique-tactic"><span class="badge badge-purple">Persistence</span></div>
+          </div>
+        </div>
+        <div class="mitre-card-body">
+          <div class="mitre-detail-row"><span class="mitre-detail-label">How it works</span><span>Attacker modifies the firmware of an ICS device (PLC, RTU, sensor gateway). Firmware modifications are extremely persistent — they survive factory resets and firmware updates depending on implementation.</span></div>
+          <div class="mitre-detail-row"><span class="mitre-detail-label">Oil & Gas angle</span><span>Industrial PLCs and smart sensors often allow firmware uploads through their programming software. A compromised engineering workstation could push malicious firmware to multiple PLCs in a single automated session, affecting an entire pipeline segment.</span></div>
+          <div class="mitre-detail-row"><span class="mitre-detail-label">Components affected</span><span><span class="badge badge-amber">PLC</span> <span class="badge badge-red">IIoT Sensors</span> <span class="badge badge-cyan">Edge Gateways</span></span></div>
+          <div class="mitre-detail-row"><span class="mitre-detail-label">ICS Mitigation</span><span><span class="mono text-green">M0945</span> Code Signing, <span class="mono text-green">M0946</span> Boot Integrity, vendor firmware authentication requirements</span></div>
+        </div>
+      </div>
+
+      <div class="mitre-card" data-tactic="lateral">
+        <div class="mitre-card-header" onclick="toggleMitre(this.parentElement)">
+          <span class="technique-id">T0812</span>
+          <div>
+            <div class="technique-name">Default Credentials</div>
+            <div class="technique-tactic"><span class="badge badge-cyan">Lateral Movement</span></div>
+          </div>
+        </div>
+        <div class="mitre-card-body">
+          <div class="mitre-detail-row"><span class="mitre-detail-label">How it works</span><span>Exploiting unchanged factory-default credentials on OT devices to gain unauthorized access. Extremely common in ICS environments where devices are deployed and never have credentials changed.</span></div>
+          <div class="mitre-detail-row"><span class="mitre-detail-label">Oil & Gas angle</span><span>Siemens SIMATIC PLCs, Honeywell DCS units, and many SCADA historian databases have well-known default passwords. Shodan regularly indexes exposed ICS devices with default creds. APT groups compile these databases. Once in the OT network, this is the fastest lateral movement path.</span></div>
+          <div class="mitre-detail-row"><span class="mitre-detail-label">Components affected</span><span><span class="badge badge-amber">PLC</span> <span class="badge badge-cyan">SCADA</span> <span class="badge badge-red">HMI</span></span></div>
+          <div class="mitre-detail-row"><span class="mitre-detail-label">ICS Mitigation</span><span><span class="mono text-green">M0927</span> Password Policies — mandatory credential rotation; asset management registry to track all default credential instances</span></div>
+        </div>
+      </div>
+
+      <div class="mitre-card" data-tactic="lateral">
+        <div class="mitre-card-header" onclick="toggleMitre(this.parentElement)">
+          <span class="technique-id">T0843</span>
+          <div>
+            <div class="technique-name">Program Download</div>
+            <div class="technique-tactic"><span class="badge badge-cyan">Lateral Movement</span></div>
+          </div>
+        </div>
+        <div class="mitre-card-body">
+          <div class="mitre-detail-row"><span class="mitre-detail-label">How it works</span><span>Using legitimate OT protocols (Modbus, EtherNet/IP, PROFINET) to download modified programs to PLCs from a compromised engineering workstation. This is legitimate functionality being abused — standard engineering practice, no exploit required.</span></div>
+          <div class="mitre-detail-row"><span class="mitre-detail-label">Oil & Gas angle</span><span>Engineers routinely push logic updates to PLCs from workstations. An attacker with workstation access uses the exact same workflow — Step 7 software, OPC UA connection — to push malicious programs to 15 pipeline PLCs in 10 minutes. Operators see nothing unusual because the process looks identical.</span></div>
+          <div class="mitre-detail-row"><span class="mitre-detail-label">Components affected</span><span><span class="badge badge-amber">PLC</span> <span class="badge badge-amber">Eng. Workstation</span></span></div>
+          <div class="mitre-detail-row"><span class="mitre-detail-label">ICS Mitigation</span><span><span class="mono text-green">M0802</span> Communication Authenticity, <span class="mono text-green">M0813</span> Software Process and Device Authentication — only authenticated workstations should be able to push PLC programs</span></div>
+        </div>
+      </div>
+
+      <div class="mitre-card" data-tactic="discovery">
+        <div class="mitre-card-header" onclick="toggleMitre(this.parentElement)">
+          <span class="technique-id">T0840</span>
+          <div>
+            <div class="technique-name">Network Connection Enumeration</div>
+            <div class="technique-tactic"><span class="badge badge-green">Discovery</span></div>
+          </div>
+        </div>
+        <div class="mitre-card-body">
+          <div class="mitre-detail-row"><span class="mitre-detail-label">How it works</span><span>Scanning the OT network to discover connected devices, open ports, and running protocols. In ICS environments, passive scanning of Modbus, DNP3, and EtherNet/IP traffic is sufficient — devices announce themselves constantly.</span></div>
+          <div class="mitre-detail-row"><span class="mitre-detail-label">Oil & Gas angle</span><span>Once inside the OT network segment, an attacker runs passive ICS-aware scanners (Claroty, Dragos equivalent tools) to map every PLC, RTU, sensor, and their firmware versions within hours. This is the recon phase before targeted manipulation. Flat OT networks make this trivially easy.</span></div>
+          <div class="mitre-detail-row"><span class="mitre-detail-label">Components affected</span><span><span class="badge badge-cyan">OT Network</span> <span class="badge badge-amber">All OT Devices</span></span></div>
+          <div class="mitre-detail-row"><span class="mitre-detail-label">ICS Mitigation</span><span><span class="mono text-green">M0930</span> Network Segmentation — micro-segmentation limits blast radius; OT network monitoring (Dragos/Claroty) detects unusual scanning behavior</span></div>
+        </div>
+      </div>
+
+      <div class="mitre-card" data-tactic="inhibit">
+        <div class="mitre-card-header" onclick="toggleMitre(this.parentElement)">
+          <span class="technique-id">T0856</span>
+          <div>
+            <div class="technique-name">Spoof Reporting Message</div>
+            <div class="technique-tactic"><span class="badge badge-amber">Inhibit Response Function</span></div>
+          </div>
+        </div>
+        <div class="mitre-card-body">
+          <div class="mitre-detail-row"><span class="mitre-detail-label">How it works</span><span>Attacker injects false status messages into the SCADA communication stream so that operators see normal readings while the actual process is compromised. Stuxnet's defining technique: centrifuges were destroying themselves while the control room showed "all systems normal."</span></div>
+          <div class="mitre-detail-row"><span class="mitre-detail-label">Oil & Gas angle</span><span>Pipeline pressure is climbing dangerously. The SCADA display shows 60 PSI (normal) because the attacker has injected spoofed Modbus response packets. Operators have no idea. Safety alarms don't trigger. This is the most dangerous inhibit technique because it creates a window of time for physical damage to build undetected.</span></div>
+          <div class="mitre-detail-row"><span class="mitre-detail-label">Components affected</span><span><span class="badge badge-cyan">SCADA</span> <span class="badge badge-red">Operator HMI</span></span></div>
+          <div class="mitre-detail-row"><span class="mitre-detail-label">ICS Mitigation</span><span><span class="mono text-green">M0802</span> Communication Authenticity, independent physical gauges, cross-validation between SCADA and physical sensors</span></div>
+        </div>
+      </div>
+
+      <div class="mitre-card" data-tactic="inhibit">
+        <div class="mitre-card-header" onclick="toggleMitre(this.parentElement)">
+          <span class="technique-id">T0838</span>
+          <div>
+            <div class="technique-name">Modify Alarm Settings</div>
+            <div class="technique-tactic"><span class="badge badge-amber">Inhibit Response Function</span></div>
+          </div>
+        </div>
+        <div class="mitre-card-body">
+          <div class="mitre-detail-row"><span class="mitre-detail-label">How it works</span><span>Attacker accesses SCADA configuration and raises alarm thresholds or disables specific alarms entirely. Operators continue working, unaware that safety thresholds have been silently modified.</span></div>
+          <div class="mitre-detail-row"><span class="mitre-detail-label">Oil & Gas angle</span><span>Change the high-pressure alarm threshold from 80 PSI to 200 PSI in SCADA config. Now the pipeline can reach dangerous levels without triggering any alert. Operators are trained to respond to alarms — if there's no alarm, they assume everything is fine.</span></div>
+          <div class="mitre-detail-row"><span class="mitre-detail-label">Components affected</span><span><span class="badge badge-cyan">SCADA</span> <span class="badge badge-amber">DCS</span></span></div>
+          <div class="mitre-detail-row"><span class="mitre-detail-label">ICS Mitigation</span><span><span class="mono text-green">M0947</span> Audit — automated integrity checking of alarm configurations; change management process for all SCADA settings</span></div>
+        </div>
+      </div>
+
+      <div class="mitre-card" data-tactic="impair">
+        <div class="mitre-card-header" onclick="toggleMitre(this.parentElement)">
+          <span class="technique-id">T0836</span>
+          <div>
+            <div class="technique-name">Modify Parameter</div>
+            <div class="technique-tactic"><span class="badge badge-red">Impair Process Control</span></div>
+          </div>
+        </div>
+        <div class="mitre-card-body">
+          <div class="mitre-detail-row"><span class="mitre-detail-label">How it works</span><span>Direct modification of process control parameters — setpoints, gain values, limit values — via OT protocols. No program modification required; just write a new value to the PLC register. Modbus write commands require no authentication by default.</span></div>
+          <div class="mitre-detail-row"><span class="mitre-detail-label">Oil & Gas angle</span><span>Write a new setpoint to the PLC register controlling the pressure relief valve: change from "open at 90 PSI" to "open at 500 PSI." The pipeline now has no effective pressure relief. When pressure builds, no physical safety response occurs. This is a direct path to pipeline rupture.</span></div>
+          <div class="mitre-detail-row"><span class="mitre-detail-label">Components affected</span><span><span class="badge badge-amber">PLC</span> <span class="badge badge-red">DCS</span> <span class="badge badge-red">SIS</span></span></div>
+          <div class="mitre-detail-row"><span class="mitre-detail-label">ICS Mitigation</span><span><span class="mono text-green">M0800</span> Access Management, <span class="mono text-green">M0801</span> Access Control — restrict which devices can write to PLC registers; use protocol-aware firewalls to block unauthenticated Modbus write commands</span></div>
+        </div>
+      </div>
+
+      <div class="mitre-card" data-tactic="impact">
+        <div class="mitre-card-header" onclick="toggleMitre(this.parentElement)">
+          <span class="technique-id">T0880</span>
+          <div>
+            <div class="technique-name">Loss of Safety</div>
+            <div class="technique-tactic"><span class="badge badge-red">Impact</span></div>
+          </div>
+        </div>
+        <div class="mitre-card-body">
+          <div class="mitre-detail-row"><span class="mitre-detail-label">How it works</span><span>The ultimate ICS attack goal: compromise the Safety Instrumented System (SIS) so that it cannot perform its protective function. TRITON/TRISIS is the only known malware designed specifically to do this.</span></div>
+          <div class="mitre-detail-row"><span class="mitre-detail-label">Oil & Gas angle</span><span>The SIS (e.g., Triconex) is the last line of defense — it triggers emergency shutdown when pressures, temperatures, or flows exceed safe limits. TRITON put the SIS into a compromised state: it would either fail to trigger a shutdown, or trigger one at the wrong time. In an Oil & Gas facility, this is the difference between a near-miss and a mass casualty event.</span></div>
+          <div class="mitre-detail-row"><span class="mitre-detail-label">Components affected</span><span><span class="badge badge-red">SIS (Triconex)</span> <span class="badge badge-amber">Safety Controllers</span></span></div>
+          <div class="mitre-detail-row"><span class="mitre-detail-label">ICS Mitigation</span><span><span class="mono text-green">M0810</span> Network Allowlists, physical isolation of SIS network, diverse safety system (independent hardware, different vendor from main control system)</span></div>
+        </div>
+      </div>
+
+      <div class="mitre-card" data-tactic="impact">
+        <div class="mitre-card-header" onclick="toggleMitre(this.parentElement)">
+          <span class="technique-id">T0813</span>
+          <div>
+            <div class="technique-name">Denial of Control</div>
+            <div class="technique-tactic"><span class="badge badge-red">Impact</span></div>
+          </div>
+        </div>
+        <div class="mitre-card-body">
+          <div class="mitre-detail-row"><span class="mitre-detail-label">How it works</span><span>Preventing operators from issuing control commands to field devices. Can be achieved by DoS on SCADA/OT network, locking operators out of HMI accounts, or triggering safe-state modes on PLCs that block remote commands.</span></div>
+          <div class="mitre-detail-row"><span class="mitre-detail-label">Oil & Gas angle</span><span>During an emerging pipeline leak, operators lose the ability to close emergency shutoff valves through SCADA. They must physically dispatch field teams to every valve — potentially taking hours while the leak continues. This combines physical disruption with maximized environmental and safety damage.</span></div>
+          <div class="mitre-detail-row"><span class="mitre-detail-label">Components affected</span><span><span class="badge badge-cyan">SCADA</span> <span class="badge badge-amber">PLC</span> <span class="badge badge-red">Operator HMI</span></span></div>
+          <div class="mitre-detail-row"><span class="mitre-detail-label">ICS Mitigation</span><span><span class="mono text-green">M0810</span> Network Allowlists, <span class="mono text-green">M0953</span> Data Backup — manual override procedures for all critical valves; backup communication paths (radio, serial)</span></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- TAB 4: ATTACK SIMULATION -->
+  <div class="panel" id="panel-attack">
+    <div class="section-title">Task 4 — Adversary Simulation</div>
+    <h2>APT Attack Chain — Pipeline Control</h2>
+    <p class="lead">A realistic APT attack against an Oil & Gas facility inspired by TRITON (2017) and Industroyer (2016). Unlike Stuxnet which targeted a specific facility, this is a multi-stage campaign designed to achieve maximum physical impact. Click each step to expand.</p>
+
+    <div class="grid-2 mb-16">
+      <div class="card" style="border-color: rgba(239,68,68,0.4);">
+        <div class="card-title"><span class="text-red">🎯</span> Objective</div>
+        <p style="font-size:13px;">Sabotage a liquefied natural gas (LNG) pipeline facility — cause overpressure event leading to rupture, while disabling the SIS to prevent automatic emergency shutdown. Maximize damage while maintaining covert presence as long as possible.</p>
+      </div>
+      <div class="card" style="border-color: rgba(245,158,11,0.4);">
+        <div class="card-title"><span class="text-amber">👤</span> Threat Actor Profile</div>
+        <p style="font-size:13px;">Nation-state APT group (comparable to XENOTIME, the TRITON actors). Motivated by geopolitical disruption. Has OT-specific technical capability. Prepared to spend 6-18 months in reconnaissance before triggering the payload.</p>
+      </div>
+    </div>
+
+    <div class="attack-chain">
+
+      <div class="attack-step">
+        <div class="attack-step-header" onclick="toggleStep(this.parentElement)">
+          <div class="step-dot" style="background:rgba(168,85,247,0.3);color:#a855f7;border-color:#a855f7;">1</div>
+          <div>
+            <div class="attack-step-title">Initial Compromise — Spearphishing</div>
+            <div class="attack-step-subtitle">T0865 · Initial Access · IT Network</div>
+          </div>
+        </div>
+        <div class="attack-step-body">
+          <p style="font-size:13px;">The APT group researches the target over 3 months using OSINT — LinkedIn profiles of SCADA engineers, company vendor relationships, recent regulatory filings that mention their ICS platform (Honeywell Experion PKS).</p>
+          <div class="attack-detail-box">
+            <div class="detail-box">
+              <h4 style="color:var(--red);">Attacker Action</h4>
+              <p>Sends a targeted email to the SCADA engineer. Subject: "Q3 Process Safety Review — IEC 61511 Compliance Template." Attachment is a weaponized Excel file with embedded macro. Engineer opens it, thinking it's routine.</p>
+            </div>
+            <div class="detail-box">
+              <h4 style="color:var(--green);">Detection Opportunity</h4>
+              <p>Email security gateway scanning attachments; macro execution alert on endpoint; EDR detecting unusual Excel process spawning PowerShell. Most OT-connected IT systems lack these controls.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="attack-step">
+        <div class="attack-step-header" onclick="toggleStep(this.parentElement)">
+          <div class="step-dot" style="background:rgba(245,158,11,0.3);color:#f59e0b;border-color:#f59e0b;">2</div>
+          <div>
+            <div class="attack-step-title">IT Persistence — Backdoor Installation</div>
+            <div class="attack-step-subtitle">T0807 · Execution · IT Workstation</div>
+          </div>
+        </div>
+        <div class="attack-step-body">
+          <p style="font-size:13px;">The macro installs a RAT (Remote Access Trojan) that beacons over HTTPS to a C2 server. The attacker now has persistent access to the engineer's workstation — in the enterprise IT network.</p>
+          <div class="attack-detail-box">
+            <div class="detail-box">
+              <h4 style="color:var(--red);">Attacker Action</h4>
+              <p>RAT runs as a scheduled task mimicking a legitimate Windows Update service. It exfiltrates Active Directory credentials, network topology maps, and VPN configuration files over 4 weeks — slow and quiet to avoid anomaly detection.</p>
+            </div>
+            <div class="detail-box">
+              <h4 style="color:var(--green);">Detection Opportunity</h4>
+              <p>SIEM correlation of unusual outbound HTTPS to unknown domains; User and Entity Behavior Analytics (UEBA) flagging credential access outside normal hours; DLP alert on network diagram exfiltration.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="attack-step">
+        <div class="attack-step-header" onclick="toggleStep(this.parentElement)">
+          <div class="step-dot" style="background:rgba(245,158,11,0.3);color:#f59e0b;border-color:#f59e0b;">3</div>
+          <div>
+            <div class="attack-step-title">IT → OT Lateral Movement</div>
+            <div class="attack-step-subtitle">T0822 · Lateral Movement · DMZ Crossing</div>
+          </div>
+        </div>
+        <div class="attack-step-body">
+          <p style="font-size:13px;">Using stolen credentials, the attacker accesses the engineering jump server — a machine that sits between IT and OT networks. This is the critical IT-OT boundary crossing.</p>
+          <div class="attack-detail-box">
+            <div class="detail-box">
+              <h4 style="color:var(--red);">Attacker Action</h4>
+              <p>Logs into the VPN using stolen credentials. Pivots to the jump server. From there, enumerates the OT network segment using passive listening (Wireshark on Modbus/OPC UA traffic). Maps every PLC, their IP addresses, firmware versions, and engineering software in use.</p>
+            </div>
+            <div class="detail-box">
+              <h4 style="color:var(--green);">Detection Opportunity</h4>
+              <p>MFA on VPN would block this immediately. Anomaly detection on jump server login — unusual time, unusual source IP. OT network monitoring (Dragos/Claroty) detecting passive scanning patterns.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="attack-step">
+        <div class="attack-step-header" onclick="toggleStep(this.parentElement)">
+          <div class="step-dot" style="background:rgba(239,68,68,0.3);color:#ef4444;border-color:#ef4444;">4</div>
+          <div>
+            <div class="attack-step-title">SCADA Access — Command & Control Established</div>
+            <div class="attack-step-subtitle">T0812 · Lateral Movement · SCADA Server</div>
+          </div>
+        </div>
+        <div class="attack-step-body">
+          <p style="font-size:13px;">The SCADA historian server is accessible from the jump server using default credentials that were never changed. The attacker now has full visibility into all process data and can interact with the SCADA application.</p>
+          <div class="attack-detail-box">
+            <div class="detail-box">
+              <h4 style="color:var(--red);">Attacker Action</h4>
+              <p>Installs a second backdoor on the SCADA server for redundant access. Downloads the engineering project files — these contain the full PLC program logic, I/O map, setpoints, and alarm configurations for the entire facility. This is the "blueprint" for the attack.</p>
+            </div>
+            <div class="detail-box">
+              <h4 style="color:var(--green);">Detection Opportunity</h4>
+              <p>Changed default credentials would have prevented this. File access audit logs on SCADA server. DLP alert on engineering project file download. Application allowlisting preventing unauthorized software installation.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="attack-step">
+        <div class="attack-step-header" onclick="toggleStep(this.parentElement)">
+          <div class="step-dot" style="background:rgba(239,68,68,0.3);color:#ef4444;border-color:#ef4444;">5</div>
+          <div>
+            <div class="attack-step-title">SIS Attack — Safety System Compromised (TRITON-style)</div>
+            <div class="attack-step-subtitle">T0880 · Impact · Safety Instrumented System</div>
+          </div>
+        </div>
+        <div class="attack-step-body">
+          <p style="font-size:13px;">This is the TRITON technique. The SIS (Triconex controller) is accessed via the engineering network. The attacker reprograms the SIS to either fail-safe in an unsafe state or to not respond to shutdown triggers.</p>
+          <div class="attack-detail-box">
+            <div class="detail-box">
+              <h4 style="color:var(--red);">Attacker Action</h4>
+              <p>Uses TriStation protocol (the Triconex engineering protocol) to inject modified SIS logic. The new logic: when pressure exceeds 120 PSI (threshold for emergency shutdown), instead of triggering ESD, the SIS enters a "hold" state. All SIS diagnostic lights continue showing green.</p>
+            </div>
+            <div class="detail-box">
+              <h4 style="color:var(--green);">Detection Opportunity</h4>
+              <p>Physical isolation of SIS network from control network. TRITON was actually discovered accidentally when a programming error caused the SIS to initiate a safe shutdown, alerting engineers. SIS integrity checking — compare running program to known-good backup.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="attack-step">
+        <div class="attack-step-header" onclick="toggleStep(this.parentElement)">
+          <div class="step-dot" style="background:rgba(239,68,68,0.5);color:#ef4444;border-color:#ef4444;">6</div>
+          <div>
+            <div class="attack-step-title">Process Manipulation — Pipeline Overpressure</div>
+            <div class="attack-step-subtitle">T0836 + T0856 · Impair Process + Inhibit Response</div>
+          </div>
+        </div>
+        <div class="attack-step-body">
+          <p style="font-size:13px;">With the SIS compromised and the ability to spoof SCADA readings, the attacker triggers the physical attack. PLC setpoints are modified via T0836, while T0856 ensures operators see nothing unusual.</p>
+          <div class="attack-detail-box">
+            <div class="detail-box">
+              <h4 style="color:var(--red);">Attacker Action</h4>
+              <p>Writes new pressure setpoints to the pipeline section PLCs via Modbus — closing downstream pressure relief valves while maintaining upstream pump pressure. Simultaneously injects spoofed Modbus response packets so SCADA reads 60 PSI (normal). Physical pressure climbs to 180+ PSI undetected. Pipeline ruptures.</p>
+            </div>
+            <div class="detail-box">
+              <h4 style="color:var(--green);">What Should Have Stopped This</h4>
+              <p>Independent physical pressure gauges not connected to SCADA. Protocol-aware firewall blocking unauthenticated Modbus writes. Redundant SIS with different communication path. Anomaly detection on PLC I/O behavior. Real-time cross-validation between SCADA and field instruments.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="insight-box">
+      <strong class="text-cyan">Why This Differs From the Sample Answer</strong>
+      <p class="mt-8" style="font-size:13px;">The sample answer has 7 generic steps with no technical depth. A strong answer: (1) uses real ICS-specific techniques with T-codes, (2) shows <em>how</em> each step works technically, (3) explains what makes detection hard at each stage, (4) draws on real incidents (TRITON specifically is ideal for Oil & Gas), and (5) connects the attack steps to specific components in the architecture.</p>
+    </div>
+  </div>
+
+  <!-- TAB 5: DEFENSE -->
+  <div class="panel" id="panel-defense">
+    <div class="section-title">Task 5 — Defense Strategy Design</div>
+    <h2>Multi-Layered Security Architecture</h2>
+    <p class="lead">The "defense-in-depth" principle: assume the attacker will breach the outer layer, so build independent defenses at every layer. Click each layer to expand controls and their MITRE ICS mitigation mappings.</p>
+
+    <div class="defense-pyramid">
+
+      <div class="defense-layer open" style="background:rgba(168,85,247,0.1);border-color:rgba(168,85,247,0.4);color:#a855f7;" onclick="toggleDefense(this)">
+        <div class="defense-layer-header">
+          <div>
+            <div class="defense-layer-title">Layer 1 — Perimeter & Network Segmentation</div>
+            <div class="defense-layer-subtitle">Preventive · Keep attackers from crossing IT→OT boundary</div>
+          </div>
+          <span style="font-size:14px;">▾</span>
+        </div>
+        <div class="defense-controls">
+          <p style="font-size:13px; color:var(--text); margin-bottom:10px;">The most impactful single control for OT security. Without proper segmentation, once an attacker breaches IT, they have unrestricted access to every PLC in the facility.</p>
+          <div>
+            <span class="control-tag" style="color:#a855f7;">IT/OT Firewall + DMZ</span>
+            <span class="control-tag" style="color:#a855f7;">Unidirectional Gateway (data diode)</span>
+            <span class="control-tag" style="color:#a855f7;">OT VLAN segmentation</span>
+            <span class="control-tag" style="color:#a855f7;">SIS network isolation (air-gap)</span>
+            <span class="control-tag" style="color:#a855f7;">Protocol-aware firewall (blocks Modbus writes from IT)</span>
+          </div>
+          <p style="margin-top:10px;font-size:12px;color:var(--text-dim);">MITRE Mitigations: <span class="mono text-green">M0930</span> Network Segmentation · <span class="mono text-green">M0810</span> Network Allowlists</p>
+        </div>
+      </div>
+
+      <div class="defense-layer" style="background:rgba(245,158,11,0.1);border-color:rgba(245,158,11,0.4);color:#f59e0b;" onclick="toggleDefense(this)">
+        <div class="defense-layer-header">
+          <div>
+            <div class="defense-layer-title">Layer 2 — Identity & Access Control</div>
+            <div class="defense-layer-subtitle">Preventive · Zero Trust — never trust, always verify</div>
+          </div>
+          <span style="font-size:14px;">▸</span>
+        </div>
+        <div class="defense-controls">
+          <p style="font-size:13px; color:var(--text); margin-bottom:10px;">Default credentials and shared accounts are responsible for a large percentage of ICS breaches. Every device must have unique credentials; every remote access must use MFA.</p>
+          <div>
+            <span class="control-tag" style="color:#f59e0b;">MFA on all remote access (VPN, RDP, jump server)</span>
+            <span class="control-tag" style="color:#f59e0b;">Change all default OT device credentials</span>
+            <span class="control-tag" style="color:#f59e0b;">Role-based access control (RBAC) on SCADA</span>
+            <span class="control-tag" style="color:#f59e0b;">Privileged Access Workstations (PAW) for OT engineers</span>
+            <span class="control-tag" style="color:#f59e0b;">Disable unused services/ports on PLCs</span>
+            <span class="control-tag" style="color:#f59e0b;">Zero Trust Architecture for SCADA access</span>
+          </div>
+          <p style="margin-top:10px;font-size:12px;color:var(--text-dim);">MITRE Mitigations: <span class="mono text-green">M0800</span> Access Management · <span class="mono text-green">M0804</span> Authorization Enforcement · <span class="mono text-green">M0927</span> Password Policies</p>
+        </div>
+      </div>
+
+      <div class="defense-layer" style="background:rgba(6,182,212,0.1);border-color:rgba(6,182,212,0.4);color:#06b6d4;" onclick="toggleDefense(this)">
+        <div class="defense-layer-header">
+          <div>
+            <div class="defense-layer-title">Layer 3 — OT Monitoring & Anomaly Detection</div>
+            <div class="defense-layer-subtitle">Detective · Know what "normal" looks like — detect deviations</div>
+          </div>
+          <span style="font-size:14px;">▸</span>
+        </div>
+        <div class="defense-controls">
+          <p style="font-size:13px; color:var(--text); margin-bottom:10px;">OT-specific IDS (Dragos, Claroty, Nozomi) understand industrial protocols. They establish a baseline of normal Modbus/DNP3 communication and alert on deviations — like a new Modbus write to a PLC register that's never been written to before.</p>
+          <div>
+            <span class="control-tag" style="color:#06b6d4;">OT-aware IDS (Dragos Platform / Claroty)</span>
+            <span class="control-tag" style="color:#06b6d4;">SCADA anomaly detection (unusual commands)</span>
+            <span class="control-tag" style="color:#06b6d4;">PLC integrity monitoring (hash of program)</span>
+            <span class="control-tag" style="color:#06b6d4;">SIS diagnostic monitoring (independent channel)</span>
+            <span class="control-tag" style="color:#06b6d4;">SIEM integration (OT + IT log correlation)</span>
+            <span class="control-tag" style="color:#06b6d4;">AI-based process anomaly detection</span>
+          </div>
+          <p style="margin-top:10px;font-size:12px;color:var(--text-dim);">MITRE Mitigations: <span class="mono text-green">M0905</span> Monitoring · <span class="mono text-green">M0947</span> Audit · <span class="mono text-green">M0816</span> Mitigation through Detection</p>
+        </div>
+      </div>
+
+      <div class="defense-layer" style="background:rgba(34,197,94,0.1);border-color:rgba(34,197,94,0.4);color:#22c55e;" onclick="toggleDefense(this)">
+        <div class="defense-layer-header">
+          <div>
+            <div class="defense-layer-title">Layer 4 — Endpoint & Device Hardening</div>
+            <div class="defense-layer-subtitle">Preventive · Reduce attack surface at device level</div>
+          </div>
+          <span style="font-size:14px;">▸</span>
+        </div>
+        <div class="defense-controls">
+          <div>
+            <span class="control-tag" style="color:#22c55e;">Application allowlisting on SCADA/HMI workstations</span>
+            <span class="control-tag" style="color:#22c55e;">USB port blocking on OT computers</span>
+            <span class="control-tag" style="color:#22c55e;">Firmware integrity verification before updates</span>
+            <span class="control-tag" style="color:#22c55e;">Code signing for PLC program downloads</span>
+            <span class="control-tag" style="color:#22c55e;">Patch management (OT-safe schedule)</span>
+            <span class="control-tag" style="color:#22c55e;">Disable ICMP/unused protocols on PLCs</span>
+          </div>
+          <p style="margin-top:10px;font-size:12px;color:var(--text-dim);">MITRE Mitigations: <span class="mono text-green">M0938</span> Execution Prevention · <span class="mono text-green">M0945</span> Code Signing · <span class="mono text-green">M0946</span> Boot Integrity</p>
+        </div>
+      </div>
+
+      <div class="defense-layer" style="background:rgba(239,68,68,0.1);border-color:rgba(239,68,68,0.4);color:#ef4444;" onclick="toggleDefense(this)">
+        <div class="defense-layer-header">
+          <div>
+            <div class="defense-layer-title">Layer 5 — Incident Response & Recovery</div>
+            <div class="defense-layer-subtitle">Responsive · Assume breach — contain and recover</div>
+          </div>
+          <span style="font-size:14px;">▸</span>
+        </div>
+        <div class="defense-controls">
+          <div>
+            <span class="control-tag" style="color:#ef4444;">OT-specific Incident Response Plan</span>
+            <span class="control-tag" style="color:#ef4444;">SOC with OT expertise (or MSSP)</span>
+            <span class="control-tag" style="color:#ef4444;">Offline backups of PLC programs (golden copies)</span>
+            <span class="control-tag" style="color:#ef4444;">Manual override procedures for all critical valves</span>
+            <span class="control-tag" style="color:#ef4444;">Emergency shutdown runbooks</span>
+            <span class="control-tag" style="color:#ef4444;">OT ISAC threat intelligence sharing</span>
+            <span class="control-tag" style="color:#ef4444;">Regular tabletop exercises with operations team</span>
+          </div>
+          <p style="margin-top:10px;font-size:12px;color:var(--text-dim);">MITRE Mitigations: <span class="mono text-green">M0953</span> Data Backup · <span class="mono text-green">M0807</span> Network Intrusion Prevention</p>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="insight-box">
+      <strong class="text-cyan">Key Point for Task 5</strong>
+      <p class="mt-8" style="font-size:13px;">The assignment asks you to "map defenses back to MITRE ATT&CK mitigation techniques." The ICS framework mitigations (M08xx range) are the correct ones to cite. Each defense layer above shows the relevant M-codes. This is what differentiates your answer from the sample, which cited incorrect Enterprise mitigations.</p>
+    </div>
+  </div>
+
+  <!-- TAB 6: CRITICAL EVALUATION -->
+  <div class="panel" id="panel-eval">
+    <div class="section-title">Task 6 — Critical Evaluation</div>
+    <h2>Limitations, Challenges & Gaps</h2>
+    <p class="lead">This is the most intellectually demanding task. It asks you to think critically about your own work — what does MITRE ATT&CK for ICS miss? What can't you actually defend against in a real refinery? Being honest here demonstrates deeper understanding than a confident-sounding but shallow answer.</p>
+
+    <h3 style="color:#fff; margin-bottom:12px;">Limitations of MITRE ATT&CK for ICS</h3>
+
+    <div class="limitation-card">
+      <div class="card-title"><span class="text-red">⚡</span> No Process Safety Context</div>
+      <p style="font-size:13px; margin-top:6px;">ATT&CK for ICS describes attack <em>techniques</em> but doesn't model the consequence severity. T0836 (Modify Parameter) applied to a pump setpoint vs. a pipeline pressure relief valve have radically different consequences, but ATT&CK treats them identically. It's not a risk model — it's a technique library. In Oil & Gas, consequence modeling (HAZOP, SIL analysis) is a separate discipline that doesn't integrate with ATT&CK.</p>
+    </div>
+
+    <div class="limitation-card">
+      <div class="card-title"><span class="text-red">📊</span> Incomplete Coverage of OT-Specific Protocols</div>
+      <p style="font-size:13px; margin-top:6px;">MITRE ATT&CK for ICS doesn't have dedicated techniques for attacks on specific industrial protocols like DNP3 authentication bypass, PROFIBUS timing attacks, or OPC DA vulnerabilities. Researchers have demonstrated attacks on these protocols that don't map cleanly to existing ATT&CK techniques. The framework lags behind the actual threat research in ICS security.</p>
+    </div>
+
+    <div class="limitation-card">
+      <div class="card-title"><span class="text-red">🔄</span> Biased Toward Attack Simulation, Not Defense Design</div>
+      <p style="font-size:13px; margin-top:6px;">ATT&CK was built for red teams and threat intelligence — it describes what attackers do. The mitigation mappings (M-codes) are high-level and don't provide practical implementation guidance for OT environments. A SCADA engineer reading <span class="mono text-green">M0930</span> (Network Segmentation) has no guidance on how to segment a live refinery without causing operational disruptions.</p>
+    </div>
+
+    <div class="limitation-card">
+      <div class="card-title"><span class="text-red">🏭</span> Assumes IT-Style Logging and Visibility</div>
+      <p style="font-size:13px; margin-top:6px;">Many ATT&CK detection strategies assume endpoint logging, SIEM, and network traffic visibility. Legacy PLCs from the 1990s-2000s produce no logs whatsoever. A Siemens S5 PLC doesn't have a syslog output. Detection strategies based on log analysis are simply inapplicable to a large portion of Oil & Gas installed base.</p>
+    </div>
+
+    <h3 style="color:#fff; margin: 20px 0 12px;">Challenges in Oil & Gas OT Security</h3>
+
+    <div class="grid-2">
+      <div class="gap-card">
+        <div class="card-title"><span class="text-amber">⏰</span> Legacy Systems & Operational Continuity</div>
+        <p style="font-size:13px; margin-top:6px;">A refinery operating 24/7 cannot simply take a PLC offline to apply security patches. The maintenance windows are planned 6-18 months in advance and last hours, not days. Security patches that require reboots compete directly with production continuity. In practice, many OT systems remain unpatched for years — not out of negligence, but structural constraint.</p>
+      </div>
+      <div class="gap-card">
+        <div class="card-title"><span class="text-amber">⚡</span> Real-Time Constraints vs. Security Controls</div>
+        <p style="font-size:13px; margin-top:6px;">Deep packet inspection, encryption, and certificate-based authentication all add latency. For SCADA-to-PLC communications controlling a pressure relief system, a 50ms delay introduced by a TLS handshake could be the difference between safe operation and an over-pressure event. Many encryption and authentication controls are genuinely incompatible with hard real-time OT requirements.</p>
+      </div>
+      <div class="gap-card">
+        <div class="card-title"><span class="text-amber">💰</span> Cost and OT Security Expertise Gap</div>
+        <p style="font-size:13px; margin-top:6px;">OT security specialists who understand both ICS protocols and cybersecurity are rare and expensive. Many refineries rely on the same engineers for both operations and security — people trained in chemical engineering and process control, not network security. TRITON was missed for months partly because nobody was specifically looking for SIS-targeting attacks.</p>
+      </div>
+      <div class="gap-card">
+        <div class="card-title"><span class="text-amber">🔗</span> Supply Chain and Vendor Risk</div>
+        <p style="font-size:13px; margin-top:6px;">OT vendors regularly need remote or on-site access for maintenance. Each vendor connection is a potential entry point — and the facility has limited visibility into the security posture of third-party vendors. Contractual security requirements for OT vendors are often weak or unenforceable in practice.</p>
+      </div>
+    </div>
+
+    <h3 style="color:#fff; margin: 20px 0 12px;">Gaps in the Security Design (Honest Self-Evaluation)</h3>
+
+    <div class="limitation-card" style="border-color:var(--amber);">
+      <div class="card-title"><span class="text-amber">⚠</span> The IIoT Problem Remains Largely Unsolved</div>
+      <p style="font-size:13px; margin-top:6px;">The defense strategy focuses heavily on IT/OT boundary and SCADA-to-PLC communications. IIoT sensors with direct cloud connectivity bypass the entire OT security architecture. Many facilities add IIoT layers without integrating them into the existing security framework, creating a parallel unmonitored attack surface. Our defense design doesn't adequately address this.</p>
+    </div>
+
+    <div class="limitation-card" style="border-color:var(--amber);">
+      <div class="card-title"><span class="text-amber">👤</span> Insider Threat Detection is Weak</div>
+      <p style="font-size:13px; margin-top:6px;">A legitimate engineer with authorized SCADA access and knowledge of the PLC programs is nearly indistinguishable from an attacker who has compromised that engineer's credentials. UEBA tools can detect statistical anomalies, but a patient, knowledge-aware insider (or a compromised insider account used carefully) is the hardest threat to detect with technical controls.</p>
+    </div>
+
+    <div class="insight-box mt-16">
+      <strong class="text-cyan">What Makes Task 6 Stand Out</strong>
+      <p class="mt-8" style="font-size:13px;">Most students will write "MITRE ATT&CK has limitations in OT environments" and list three generic points. What separates a strong answer: <strong>specificity</strong>. Name the actual limitation, explain <em>why</em> it's a limitation in the ICS context specifically (not just generally), and — where possible — reference how it played out in a real incident. The self-evaluation of your security design gaps shows you understand the difference between a security architecture on paper and one that actually works in a live refinery.</p>
+    </div>
+
+  </div>
+
+</div><!-- /content -->
+
+<script>
+function switchTab(id) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('panel-' + id).classList.add('active');
+  event.currentTarget.classList.add('active');
+}
+
+function toggleLevel(el) {
+  el.classList.toggle('expanded');
+}
+
+function toggleMitre(card) {
+  card.classList.toggle('open');
+}
+
+function toggleStep(step) {
+  step.classList.toggle('open');
+}
+
+function toggleDefense(layer) {
+  const wasOpen = layer.classList.contains('open');
+  layer.classList.toggle('open');
+  const icon = layer.querySelector('.defense-layer-header span:last-child');
+  if (icon) icon.textContent = layer.classList.contains('open') ? '▾' : '▸';
+}
+
+function filterMitre(tactic, btn) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.mitre-card').forEach(card => {
+    if (tactic === 'all' || card.dataset.tactic === tactic) {
+      card.style.display = 'block';
+    } else {
+      card.style.display = 'none';
+    }
+  });
+}
+</script>
+</body>
+</html>
